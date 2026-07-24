@@ -52,6 +52,63 @@ fn valide_plage(champ: Text, valeur: Int, min: Int, max: Int) -> List<ErreurVali
     return out
 }
 
+// Adresse e-mail plausible : une partie locale non vide, un « @ », puis un
+// domaine contenant un « . » qui n'est ni en tête ni en fin. Validation
+// pragmatique (pas la RFC complète), suffisante pour un formulaire.
+fn valide_email(champ: Text, valeur: Text) -> List<ErreurValidation> {
+    var out: List<ErreurValidation> = []
+    let at = unwrap_or(find(valeur, "@"), -1)
+    var ok = true
+    if at <= 0 {
+        ok = false
+    }
+    if ok {
+        let domaine = sub(valeur, at + 1, len(valeur) - at - 1)
+        let point = unwrap_or(find(domaine, "."), -1)
+        // « . » présent, pas en première position, pas en dernière.
+        if point <= 0 or point >= len(domaine) - 1 {
+            ok = false
+        }
+    }
+    if not ok {
+        push(out, ErreurValidation { champ: champ, message: "adresse e-mail invalide" })
+    }
+    return out
+}
+
+// La chaîne n'est composée que de chiffres (entier non signé non vide).
+fn valide_numerique(champ: Text, valeur: Text) -> List<ErreurValidation> {
+    var out: List<ErreurValidation> = []
+    var ok = len(valeur) > 0
+    var i = 0
+    while i < len(valeur) {
+        let c = char_at(valeur, i)
+        if unwrap_or(find("0123456789", c), -1) < 0 {
+            ok = false
+        }
+        i += 1
+    }
+    if not ok {
+        push(out, ErreurValidation { champ: champ, message: "doit être numérique" })
+    }
+    return out
+}
+
+// La valeur appartient à l'ensemble autorisé (énumération).
+fn valide_dans(champ: Text, valeur: Text, autorisees: List<Text>) -> List<ErreurValidation> {
+    var out: List<ErreurValidation> = []
+    var trouve = false
+    for a in autorisees {
+        if a == valeur {
+            trouve = true
+        }
+    }
+    if not trouve {
+        push(out, ErreurValidation { champ: champ, message: "valeur non autorisée" })
+    }
+    return out
+}
+
 // La validation a-t-elle réussi ?
 fn valid_ok(erreurs: List<ErreurValidation>) -> Bool {
     return len(erreurs) == 0
@@ -79,4 +136,26 @@ fn test_fusion() {
     let e = valid_fusion(valide_requis("a", ""), valide_plage("b", 5, 0, 3))
     assert(len(e) == 2, "deux erreurs agregees")
     assert(not valid_ok(e), "non valide")
+}
+
+fn test_email() {
+    assert(valid_ok(valide_email("courriel", "alice@example.com")), "email valide")
+    assert(not valid_ok(valide_email("courriel", "alice")), "sans @")
+    assert(not valid_ok(valide_email("courriel", "@example.com")), "partie locale vide")
+    assert(not valid_ok(valide_email("courriel", "alice@localhost")), "domaine sans point")
+    assert(not valid_ok(valide_email("courriel", "alice@ex.")), "point final")
+}
+
+fn test_numerique() {
+    assert(valid_ok(valide_numerique("n", "12345")), "chiffres")
+    assert(not valid_ok(valide_numerique("n", "12a45")), "lettre presente")
+    assert(not valid_ok(valide_numerique("n", "")), "vide")
+}
+
+fn test_dans() {
+    var options: List<Text> = []
+    push(options, "rouge")
+    push(options, "vert")
+    assert(valid_ok(valide_dans("couleur", "vert", options)), "dans l'ensemble")
+    assert(not valid_ok(valide_dans("couleur", "bleu", options)), "hors ensemble")
 }

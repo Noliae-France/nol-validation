@@ -15,9 +15,11 @@ Validation déclarative avec erreurs structurées en pur [Nolc](https://github.c
 
 MIT © 2026 Bastien LANGUEDOC.
 
-## Livré (v0.1)
-`valide_requis`, `valide_longueur`, `valide_plage`, `valid_fusion`, `valid_ok` — erreurs structurées (`ErreurValidation { champ, message }`).
+## Livré (v0.2)
+Erreurs structurées (`ErreurValidation { champ, message }`), agrégeables via `valid_fusion` / `valid_ok`.
+- `valide_requis`, `valide_longueur(min,max)`, `valide_plage(min,max)`
+- `valide_email`, `valide_numerique`, `valide_dans(ensemble)`
 
 ## Feuille de route
-- Validation de JSON, paramètres d'URL, fichiers téléversés
-- Règles : email, motif/regex, énumérations, imbrication, schémas déclaratifs
+- Validation de JSON (via nol.serde), paramètres d'URL, fichiers téléversés
+- Règles : motif/regex, imbrication, schémas déclaratifs
