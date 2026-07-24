@@ -1,0 +1,82 @@
+// nol.validation — validation déclarative avec erreurs structurées, en pur Nolc.
+//
+// Fondation du module : chaque validateur renvoie une liste d'erreurs (vide =
+// valide), agrégeable. Les règles avancées (email, JSON imbriqué, fichiers
+// téléversés, schémas) arrivent dans les versions suivantes — voir README.
+
+record ErreurValidation {
+    champ: Text,
+    message: Text
+}
+
+// Agrège deux listes d'erreurs.
+fn valid_fusion(a: List<ErreurValidation>, b: List<ErreurValidation>) -> List<ErreurValidation> {
+    var out: List<ErreurValidation> = []
+    for e in a {
+        push(out, e)
+    }
+    for e in b {
+        push(out, e)
+    }
+    return out
+}
+
+// Champ obligatoire : erreur si la valeur est vide.
+fn valide_requis(champ: Text, valeur: Text) -> List<ErreurValidation> {
+    var out: List<ErreurValidation> = []
+    if len(valeur) == 0 {
+        push(out, ErreurValidation { champ: champ, message: "obligatoire" })
+    }
+    return out
+}
+
+// Longueur bornée [min, max]. `max <= 0` => pas de borne haute.
+fn valide_longueur(champ: Text, valeur: Text, min: Int, max: Int) -> List<ErreurValidation> {
+    var out: List<ErreurValidation> = []
+    let n = len(valeur)
+    if n < min {
+        push(out, ErreurValidation { champ: champ, message: "trop court (min " + text(min) + ")" })
+    }
+    if max > 0 and n > max {
+        push(out, ErreurValidation { champ: champ, message: "trop long (max " + text(max) + ")" })
+    }
+    return out
+}
+
+// Entier borné [min, max].
+fn valide_plage(champ: Text, valeur: Int, min: Int, max: Int) -> List<ErreurValidation> {
+    var out: List<ErreurValidation> = []
+    if valeur < min or valeur > max {
+        push(out, ErreurValidation { champ: champ, message: "hors plage [" + text(min) + ", " + text(max) + "]" })
+    }
+    return out
+}
+
+// La validation a-t-elle réussi ?
+fn valid_ok(erreurs: List<ErreurValidation>) -> Bool {
+    return len(erreurs) == 0
+}
+
+// ============================ TESTS ============================
+
+fn test_requis() {
+    assert(valid_ok(valide_requis("nom", "Alice")), "non vide = ok")
+    assert(not valid_ok(valide_requis("nom", "")), "vide = erreur")
+}
+
+fn test_longueur() {
+    assert(valid_ok(valide_longueur("code", "abcd", 2, 8)), "dans les bornes")
+    assert(not valid_ok(valide_longueur("code", "a", 2, 8)), "trop court")
+    assert(not valid_ok(valide_longueur("code", "abcdefghi", 2, 8)), "trop long")
+}
+
+fn test_plage() {
+    assert(valid_ok(valide_plage("age", 30, 0, 120)), "age valide")
+    assert(not valid_ok(valide_plage("age", 200, 0, 120)), "age hors plage")
+}
+
+fn test_fusion() {
+    let e = valid_fusion(valide_requis("a", ""), valide_plage("b", 5, 0, 3))
+    assert(len(e) == 2, "deux erreurs agregees")
+    assert(not valid_ok(e), "non valide")
+}
