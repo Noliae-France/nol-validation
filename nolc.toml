@@ -4,6 +4,6 @@ version = "0.1.0"
 entree = "src/lib.nol"
 auteur = "daliranas <bastien@languedoc.ovh>"
 licence = "MIT"
-description = "Validation declarative (formulaires, JSON, parametres URL, fichiers) avec erreurs structurees."
+description = "Validation declarative (formulaires, JSON, paramètres URL, fichiers) avec erreurs structurees."
 
 [dependances]
